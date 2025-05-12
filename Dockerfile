@@ -1,5 +1,5 @@
 # 🌟 Stage 1: Build the React App
-FROM node:18 as build
+FROM node:18-slim as build
 
 # Add build arguments
 ARG BUILD_DATE
@@ -16,8 +16,8 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install all dependencies, including devDependencies
-RUN npm install --include=dev
+# Install only production dependencies
+RUN npm install --production
 
 # Copy source files
 COPY . .
