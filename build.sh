@@ -17,10 +17,10 @@ trap 'log "Error occurred during build process."' ERR
 # Start build process
 log "Starting Docker build process..."
 
-# Build Docker image with both version tag and latest
+# Build Docker image with both version tag and latest1
 docker build \
     -t ${IMAGE_NAME}:${TAG} \
-    -t ${IMAGE_NAME}:latest \
+    -t ${IMAGE_NAME}:latest1 \
     --build-arg BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
     --build-arg VERSION="${TAG}" \
     .
@@ -29,7 +29,7 @@ docker build \
 if [ $? -eq 0 ]; then
     log "Docker image built successfully"
     log "Image: ${IMAGE_NAME}:${TAG}"
-    log "Image: ${IMAGE_NAME}:latest"
+    log "Image: ${IMAGE_NAME}:latest1"
 else
     log "Build failed"
     exit 1
@@ -38,4 +38,4 @@ fi
 # Push images if needed (commented out by default)
 # log "Pushing images to registry..."
 # docker push ${IMAGE_NAME}:${TAG}
-# docker push ${IMAGE_NAME}:latest
+# docker push ${IMAGE_NAME}:latest1
