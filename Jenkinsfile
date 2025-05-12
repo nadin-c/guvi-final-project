@@ -2,13 +2,10 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "nadinc/guvi_final_prj"
-        TAG = "${BUILD_NUMBER}-${sh(script: 'date +%Y%m%d-%H%M%S', returnStdout: true).trim()}"
-        CONTAINER_NAME = "jenkins-docker-container"
-        PORT = "8080"
-        DOCKER_CREDENTIALS = credentials('docker-hub-creds')
+        DOCKER_CREDENTIALS_ID = 'e752556d-0bc6-4985-ad16-6f2a663ce000'
+        DOCKER_HUB_REPO = 'nadinc/guvi_final_prj'
+        IMAGE_NAME = "${DOCKER_HUB_REPO}"
         NODE_ENV = 'production'
-        BUILD_OUTPUT_DIR = 'build'
     }
 
     stages {
@@ -18,10 +15,19 @@ pipeline {
             }
         }
 
+        stage('Generate Tag') {
+            steps {
+                script {
+                    env.TAG = "${env.BUILD_NUMBER}-${new Date().format('yyyyMMdd-HHmmss')}"
+                    echo "📌 Generated TAG: ${env.TAG}"
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t $DOCKER_HUB_REPO:latest1 .'
+                    sh "docker build -t ${IMAGE_NAME}:${TAG} ."
                 }
             }
         }
@@ -39,7 +45,12 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    sh 'docker push $DOCKER_HUB_REPO:latest1'
+                    // Tag with "reduced-size"
+                    sh "docker tag ${IMAGE_NAME}:${TAG} ${IMAGE_NAME}:reduced-size"
+
+                    // Push both tags
+                    sh "docker push ${IMAGE_NAME}:${TAG}"
+                    sh "docker push ${IMAGE_NAME}:reduced-size"
                 }
             }
         }
@@ -47,11 +58,13 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline succeeded!'
-            echo 'Docker image pushed to Docker Hub!'
+            echo '✅ Pipeline succeeded!'
+            echo "✅ Docker image pushed with tags:"
+            echo "   🔹 ${IMAGE_NAME}:${TAG}"
+            echo "   🔹 ${IMAGE_NAME}:reduced-size"
         }
         failure {
-            echo 'Pipeline failed!'
+            echo '❌ Pipeline failed!'
         }
     }
 }

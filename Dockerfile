@@ -1,47 +1,23 @@
-# 🌟 Stage 1: Build the React App
-FROM node:18 as build
+# Stage 1: Build React app
+FROM node:18-alpine AS builder
 
-# Add build arguments
-ARG BUILD_DATE
-ARG VERSION
-
-# Add labels
-LABEL org.opencontainers.image.created="${BUILD_DATE}"
-LABEL org.opencontainers.image.version="${VERSION}"
-LABEL org.opencontainers.image.description="React Todo List Application"
-
-# Set working directory
 WORKDIR /app
-
-# Copy package files
-COPY package.json package-lock.json ./
-
-# Install all dependencies, including devDependencies
-RUN npm install --include=dev
-
-# Copy source files
+COPY package*.json ./
+RUN npm install
 COPY . .
-
-# Build the application
 RUN npm run build
 
-# 🌟 Stage 2: Serve with NGINX
+# Stage 2: Serve app with nginx
 FROM nginx:alpine
 
-# Set working directory for NGINX
-WORKDIR /usr/share/nginx/html
+# Remove default nginx static files
+RUN rm -rf /usr/share/nginx/html/*
 
-# Remove default NGINX static files
-RUN rm -rf ./*
-
-# Copy built files from the build stage
-COPY --from=build /app/dist .
-
-# Copy custom NGINX configuration (optional)
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy build files from React
+COPY --from=builder /app/build /usr/share/nginx/html
 
 # Expose port 80
 EXPOSE 80
 
-# Start NGINX server
+# Start nginx in the foreground
 CMD ["nginx", "-g", "daemon off;"]
